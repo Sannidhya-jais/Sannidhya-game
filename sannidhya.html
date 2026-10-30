@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catch the Coin Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #222;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        canvas {
+            background: #111;
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas" width="400" height="500"></canvas>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Player (Basket)
+        let player = {
+            x: canvas.width / 2 - 40,
+            y: canvas.height - 40,
+            width: 80,
+            height: 20,
+            speed: 8,
+            dx: 0
+        };
+
+        // Coin
+        let coin = {
+            x: Math.random() * (canvas.width - 20),
+            y: 0,
+            radius: 12,
+            speed: 4
+        };
+
+        let score = 0;
+        let missed = 0;
+        let isGameOver = false;
+
+        // Keyboard Controls
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "ArrowLeft") player.dx = -player.speed;
+            if (e.key === "ArrowRight") player.dx = player.speed;
+        });
+
+        document.addEventListener("keyup", (e) => {
+            if (e.key === "ArrowLeft" || e.key === "ArrowRight") player.dx = 0;
+        });
+
+        // Game Loop
+        function update() {
+            if (isGameOver) return;
+
+            // Move Player
+            player.x += player.dx;
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // Move Coin
+            coin.y += coin.speed;
+
+            // Catch Coin
+            if (
+                coin.y + coin.radius >= player.y &&
+                coin.x >= player.x &&
+                coin.x <= player.x + player.width
+            ) {
+                score++;
+                resetCoin();
+                coin.speed += 0.2; // jaise jaise score badhega, game thoda tez hoga
+            }
+
+            // Missed Coin
+            if (coin.y > canvas.height) {
+                missed++;
+                resetCoin();
+                if (missed >= 5) {
+                    isGameOver = true;
+                }
+            }
+        }
+
+        function resetCoin() {
+            coin.y = 0;
+            coin.x = Math.random() * (canvas.width - 30) + 15;
+        }
+
+        function draw() {
+            // Clear Screen
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Player
+            ctx.fillStyle = "#00ffcc";
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+
+            // Draw Coin
+            ctx.beginPath();
+            ctx.arc(coin.x, coin.y, coin.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "gold";
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw Score & Missed
+            ctx.fillStyle = "white";
+            ctx.font = "16px Arial";
+            ctx.fillText("Score: " + score, 20, 30);
+            ctx.fillText("Missed: " + missed + "/5", canvas.width - 120, 30);
+
+            // Game Over Screen
+            if (isGameOver) {
+                ctx.fillStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = "red";
+                ctx.font = "30px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 20);
+
+                ctx.fillStyle = "white";
+                ctx.font = "18px Arial";
+                ctx.fillText("Final Score: " + score, canvas.width / 2, canvas.height / 2 + 20);
+                ctx.fillText("Press F5 to Restart", canvas.width / 2, canvas.height / 2 + 60);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</body>
+</html>
